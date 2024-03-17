@@ -1,3 +1,4 @@
+"use client"
 import Image from "next/image";
 import styles from "./writePage.module.css";
 import { useContext, useEffect, useState } from "react";
