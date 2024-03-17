@@ -1,28 +1,19 @@
-"use client";
-
 import Image from "next/image";
 import styles from "./writePage.module.css";
 import { useContext, useEffect, useState } from "react";
-import "react-quill/dist/quill.bubble.css";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
-import {
-  getStorage,
-  ref,
-  uploadBytesResumable,
-  getDownloadURL,
-} from "firebase/storage";
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { app } from "@/utils/firebase";
-import ReactQuill from "react-quill";
 import { ThemeContext } from "@/context/ThemeContext";
+import dynamic from 'next/dynamic'; // Import dynamic from next/dynamic
+
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false }); // Use dynamic import for React Quill
 
 const WritePage = () => {
   const { status } = useSession();
   const router = useRouter();
-
-  const {setLoad} = useContext(ThemeContext);
-
-  
+  const { setLoad } = useContext(ThemeContext);
 
   const [open, setOpen] = useState(false);
   const [file, setFile] = useState(null);
@@ -72,6 +63,7 @@ const WritePage = () => {
 
   if (status === "unauthenticated") {
     router.push("/");
+    return null;
   }
 
   const slugify = (str) =>
@@ -82,35 +74,32 @@ const WritePage = () => {
       .replace(/[\s_-]+/g, "-")
       .replace(/^-+|-+$/g, "");
 
-      const handleSubmit = async () => {
-        try {
-          
-          setLoad(true);
-      
-          const res = await fetch("/api/posts", {
-            method: "POST",
-            body: JSON.stringify({
-              title,
-              desc: value,
-              img: media,
-              slug: slugify(title)+"-"+Math.floor(100 + Math.random() * 900),
-              catSlug: catSlug || "style", //If not selected, choose the general category
-            }),
-          });
-      
-          if (res.status === 200) {
-            const data = await res.json();
-            setLoad(false);
-          router.push(`/posts/${data.slug}`);
-            
-          } else {
-            alert("file upload the post properly")
-          }
-        } catch (error) {
-          
-          console.error("Error:", error);
-        } 
-      };
+  const handleSubmit = async () => {
+    try {
+      setLoad(true);
+
+      const res = await fetch("/api/posts", {
+        method: "POST",
+        body: JSON.stringify({
+          title,
+          desc: value,
+          img: media,
+          slug: slugify(title) + "-" + Math.floor(100 + Math.random() * 900),
+          catSlug: catSlug || "style", //If not selected, choose the general category
+        }),
+      });
+
+      if (res.status === 200) {
+        const data = await res.json();
+        setLoad(false);
+        router.push(`/posts/${data.slug}`);
+      } else {
+        alert("file upload the post properly");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
 
   return (
     <div className={styles.container}>
@@ -135,36 +124,35 @@ const WritePage = () => {
         <button className={styles.button} onClick={() => setOpen(!open)}>
           <Image src="/plus.png" alt="" width={16} height={16} />
         </button>
-   
-          {open && (
-            <div className={styles.add}>
-              <input
-                type="file"
-                id="image"
-                onChange={(e) => setFile(e.target.files[0])}
-                style={{ display: "none" }}
-              />
-              <button className={styles.addButton}>
-                <label htmlFor="image">
-                  <Image src="/image.png" alt="" width={16} height={16} />
-                </label>
-              </button>
-            </div>
-          )}
-          <ReactQuill
-            className={styles.textArea}
-            theme="bubble"
-            value={value}
-            onChange={setValue}
-            placeholder="Tell your story..."
-          />
-        
+
+        {open && (
+          <div className={styles.add}>
+            <input
+              type="file"
+              id="image"
+              onChange={(e) => setFile(e.target.files[0])}
+              style={{ display: "none" }}
+            />
+            <button className={styles.addButton}>
+              <label htmlFor="image">
+                <Image src="/image.png" alt="" width={16} height={16} />
+              </label>
+            </button>
+          </div>
+        )}
+        <ReactQuill
+          className={styles.textArea}
+          theme="bubble"
+          value={value}
+          onChange={setValue}
+          placeholder="Tell your story..."
+        />
       </div>
       <button className={styles.publish} onClick={handleSubmit}>
         Publish
       </button>
-    </div>)
-  ;
+    </div>
+  );
 };
 
 export default WritePage;
