@@ -8,7 +8,10 @@ import { ThemeContext } from "@/context/ThemeContext";
 
 export default function Home({ searchParams }) {
   const page = (searchParams && parseInt(searchParams.page)) || 1;
-  
+  const flag = false;
+  if(!flag){
+    return null;
+  }
 
   return (
     <>
